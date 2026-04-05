@@ -21,19 +21,26 @@ Raw datasets are not included due to confidentiality.
 
 You can:
 - use your own data
-- or rely on the sample dataset in `data/sample/`
+- or rely on the sample dataset available in `data/sample/`
+
+For professional inquiries related to:
+- risk analysis for market entry
+- industry implementation
+- mobility risk assessment within countries  
+
+please contact: **buttardmaxence2@icloud.com**
 
 ## 🛠️ Installation
 
 ```bash
-# Navigate to the project directory (not the file)
+# Navigate to the project directory
 cd YOUR_OWN_PATH/RiskAtlas
 
-# Create a new conda environment with a specific Python version
+# Create a new conda environment
 conda create -n RiskAtlas python=3.11
 
 # Activate the environment
 conda activate RiskAtlas
 
-# Install required Python dependencies
+# Install dependencies
 pip install -r requirements.txt
