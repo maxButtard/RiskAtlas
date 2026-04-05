@@ -26,4 +26,14 @@ You can:
 ## 🛠️ Installation
 
 ```bash
+# Navigate to the project directory (not the file)
+cd YOUR_OWN_PATH/RiskAtlas
+
+# Create a new conda environment with a specific Python version
+conda create -n RiskAtlas python=3.11
+
+# Activate the environment
+conda activate RiskAtlas
+
+# Install required Python dependencies
 pip install -r requirements.txt
