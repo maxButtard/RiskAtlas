@@ -14,7 +14,7 @@ RiskAtlas is a data-driven tool designed to assess country-level risks for marke
 - `src/` → core logic
 - `data/` → datasets (not included)
 - `outputs/` → generated maps (not included)
-- 'docs/' → example of generated map
+- `docs/` → example of generated map
 
 ## ⚠️ Data
 
@@ -25,7 +25,7 @@ You can:
 - or rely on the sample dataset available in `data/sample/`
 
 example with population on the map:
-👉 [View interactive map](https://maxButtard.github.io/RiskAtlas/docs/map.html)
+👉 [View interactive map](https://maxButtard.github.io/RiskAtlas/map.html)
 
 For professional inquiries related to:
 - risk analysis for market entry
