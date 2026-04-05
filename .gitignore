@@ -6,7 +6,7 @@ data/processed/*
 
 # Allow sample data
 !data/sample/
-!data/sample/sample_dataset.csv
+!data/sample/sample_dataset.xlsx
 
 # ======================
 # Outputs (generated files)
