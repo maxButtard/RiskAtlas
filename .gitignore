@@ -1,8 +1,17 @@
+# Data (sensitive)
 data/raw/
 data/processed/
+
+# Outputs
+outputs/
+
+# Files
 *.xlsx
 *.csv
-outputs/
+
+# Python
 __pycache__/
 *.pyc
+
+# Environment
 .env
