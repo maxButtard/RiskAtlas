@@ -1,17 +1,34 @@
-# Data (sensitive)
-data/raw/
-data/processed/
+# ======================
+# Protected Data (sensitive)
+# ======================
+data/raw/*
+data/processed/*
 
-# Outputs
-outputs/
+# Allow sample data
+!data/sample/
+!data/sample/sample_dataset.csv
 
-# Files
+# ======================
+# Outputs (generated files)
+# ======================
+outputs/*
+
+# ======================
+# Data files (global rule)
+# ======================
 *.xlsx
 *.csv
 
+# Allow sample CSV explicitly
+!data/sample/sample_dataset.csv
+
+# ======================
 # Python
+# ======================
 __pycache__/
 *.pyc
 
+# ======================
 # Environment
+# ======================
 .env
