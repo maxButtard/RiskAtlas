@@ -24,8 +24,12 @@ You can:
 - use your own data
 - or rely on the sample dataset available in `data/sample/`
 
-example with population on the map:
-👉 [View interactive map](https://maxButtard.github.io/RiskAtlas/map.html)
+## 📊 Example Output
+
+Interactive population map:
+
+👉 **[View interactive map](https://maxbuttard.github.io/RiskAtlas/map.html)**
+
 
 For professional inquiries related to:
 - risk analysis for market entry
