@@ -4,10 +4,6 @@
 data/raw/*
 data/processed/*
 
-# Allow sample data
-!data/sample/
-!data/sample/sample_dataset.xlsx
-
 # ======================
 # Outputs (generated files)
 # ======================
@@ -20,7 +16,7 @@ outputs/*
 *.csv
 
 # Allow sample CSV explicitly
-!data/sample/sample_dataset.csv
+!data/sample/sample_sample_dataset.xlsx
 
 # ======================
 # Python
