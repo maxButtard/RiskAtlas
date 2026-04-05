@@ -17,6 +17,7 @@ outputs/*
 
 # Allow sample CSV explicitly
 !data/sample/sample_dataset.xlsx
+!data/outputs/map.html
 
 # ======================
 # Python
