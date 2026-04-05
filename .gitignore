@@ -16,7 +16,7 @@ outputs/*
 *.csv
 
 # Allow sample CSV explicitly
-!data/sample/sample_sample_dataset.xlsx
+!data/sample/sample_dataset.xlsx
 
 # ======================
 # Python
