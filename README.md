@@ -28,7 +28,7 @@ For professional inquiries related to:
 - industry implementation
 - mobility risk assessment within countries  
 
-please contact: **buttardmaxence2@icloud.com**
+please contact: **lucie.balmana@gmail.com** or **buttardmaxence2@icloud.com**
 
 ## 🛠️ Installation
 
