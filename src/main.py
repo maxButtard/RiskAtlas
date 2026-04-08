@@ -7,47 +7,80 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 sys.path.append(str(BASE_DIR / "src"))
 
-from data_loader import load_example
-from geo_utils import load_geo_data
-from mapping_utils import load_country_mapping, apply_country_mapping
+from data_loader import load_example, load_data
+from geo_utils import load_geo_data,get_geo_countries
+from mapping_utils import (
+    load_country_mapping,
+    apply_country_mapping,
+    clean_raw_data,
+)
+from risk_calculations import compute_score
 from visualization import create_map
 
 import pandas as pd
 
 
 def main():
+
     # =========================
     # PATHS
     # =========================
-    sample_path = BASE_DIR / "data" / "sample" / "sample_dataset.xlsx"
+    sample_path = BASE_DIR / "data" / "raw" / "summary.xlsx"
+    target = "governance_score"
+
     mapping_path = BASE_DIR / "data" / "mapping" / "mapping_dataset.csv"
-
-    target = "Population"
-
-    # =========================
-    # LOAD DATA
-    # =========================
-    print("⚠️ Using sample dataset")
-    df = load_example(sample_path)
-
-    # Clean
-    df["Country"] = df["Country"].astype(str).str.strip()
-
-    # =========================
-    # MAPPING
-    # =========================
-    mapping = load_country_mapping(mapping_path)
-    df = apply_country_mapping(df, "Country", mapping)
 
     # =========================
     # LOAD GEO
     # =========================
     geo_data = load_geo_data()
-    geo_countries = [f["properties"]["name"] for f in geo_data["features"]]
+    geo_countries = get_geo_countries(geo_data)
 
-    # Keep only matching countries
-    df = df[df["Country"].isin(geo_countries)]
+    # =========================
+    # LOAD MAPPING
+    # =========================
+    mapping = load_country_mapping(mapping_path)
 
+    # =========================
+    # LOAD DATA
+    # =========================
+    if sample_path == BASE_DIR / "data" / "sample" / "sample_dataset.xlsx":
+        print("⚠️ Using sample dataset")
+
+        df = load_example(sample_path)
+
+        # mapping direct (df simple)
+        df = apply_country_mapping(df, "Country", mapping)
+
+    else:
+        print("⚠️ Using your own dataset...")
+
+        # 1. LOAD Data
+        raw_data = load_data(sample_path)
+
+        # 2. APPLY MAPPING 
+        for key in raw_data:
+            print(key)
+            raw_data[key] = apply_country_mapping(
+                raw_data[key], "Country", mapping
+            )
+
+        # 3. CLEAN + MERGE 
+        df = clean_raw_data(raw_data, geo_countries)
+        
+    # =========================
+    # COMPUTE SCORE
+    # =========================
+    df = compute_score(df)
+
+
+    # =========================
+    # CHECK TARGET
+    # =========================
+    if target not in df.columns:
+        raise ValueError(f"Column '{target}' not found in dataframe")
+    
+    
     # =========================
     # BUILD VALUE DICT
     # =========================
@@ -69,7 +102,10 @@ def main():
     # =========================
     m = create_map(df, geo_data, target)
 
-    output_path = BASE_DIR / "outputs" / "map.html"
+    # =========================
+    # SAVE OUTPUT
+    # =========================
+    output_path = BASE_DIR / "outputs" / f"map_{target}.html"
     output_path.parent.mkdir(exist_ok=True)
 
     m.save(output_path)
