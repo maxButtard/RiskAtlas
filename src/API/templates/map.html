@@ -9,12 +9,10 @@
 
 <div class="container">
 
-    <!-- ===== TITLE ===== -->
     <div class="title-bar">
         🌍 Risk Atlas
     </div>
 
-    <!-- ===== NAV + LOGIN ===== -->
     <div class="nav-bar">
 
         <div class="nav-left">
@@ -24,15 +22,17 @@
         </div>
 
         <div class="nav-right">
+            <span id="userInfo" style="display:none;"></span>
+
             <input id="email" placeholder="Email">
             <input id="password" type="password" placeholder="Password">
-            <button onclick="login()">Login</button>
-            <button onclick="logout()">Logout</button>
+
+            <button id="loginBtn" onclick="login()">Login</button>
+            <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
         </div>
 
     </div>
 
-    <!-- ===== MAIN ===== -->
     <div class="main">
 
         <div class="map">
@@ -90,9 +90,10 @@
 
 <script>
 const supabaseClient = supabase.createClient(
-    "https://xccdxewtvkscnudynbsx.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2R4ZXd0dmtzY251ZHluYnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzMxMjAsImV4cCI6MjA5MjI0OTEyMH0.LuVVtBh413nXknaO-NXtBpZT-V61XQbkfvHtr3BOiwE"
-);
+    "https://xccdxewtvkscnudynbsx.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2R4ZXd0dmtzY251ZHluYnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzMxMjAsImV4cCI6MjA5MjI0OTEyMH0.LuVVtBh413nXknaO-NXtBpZT-V61XQbkfvHtr3BOiwE");
 
+/* ===== LOGIN ===== */
 async function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -102,43 +103,79 @@ async function login() {
         password
     });
 
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
-
     if (error) {
         alert(error.message);
         return;
     }
 
-    localStorage.setItem("token", data.session.access_token);
-    alert("Login success");
+    sessionStorage.setItem("token", data.session.access_token); // ✅ CHANGED
+    updateUI(data.user.email);
     loadMap();
 }
 
+/* ===== LOGOUT ===== */
 async function logout() {
     await supabaseClient.auth.signOut();
-    localStorage.removeItem("token");
-    loadMap();
+    sessionStorage.removeItem("token"); // ✅ CHANGED
+    location.reload();
 }
 
+/* ===== LOAD MAP ===== */
 function loadMap() {
-    const token = localStorage.getItem("token") || "";
-    document.getElementById("mapFrame").src =
-        "/map_html?token=" + encodeURIComponent(token);
-}
-
-window.onload = () => {
-    const token = localStorage.getItem("token");
-
+    const token = sessionStorage.getItem("token"); // ✅ CHANGED
     const iframe = document.getElementById("mapFrame");
 
     if (!token) {
         iframe.src = "";
         iframe.style.display = "none";
-        alert("Please login first");
         return;
     }
 
+    iframe.style.display = "block";
+    iframe.src = "/map_html?token=" + encodeURIComponent(token);
+}
+
+/* ===== UI STATE ===== */
+function updateUI(email=null) {
+    const token = sessionStorage.getItem("token"); // ✅ CHANGED
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+
+    if (token) {
+        emailInput.style.display = "none";
+        passwordInput.style.display = "none";
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+
+        userInfo.style.display = "inline-block";
+        userInfo.innerText = email ? `👤 ${email}` : "👤 Connected";
+    } else {
+        emailInput.style.display = "inline-block";
+        passwordInput.style.display = "inline-block";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+
+        userInfo.style.display = "none";
+    }
+}
+
+/* ===== INIT ===== */
+window.onload = async () => {
+    const token = sessionStorage.getItem("token"); // ✅ CHANGED
+
+    if (!token) {
+        updateUI();
+        document.getElementById("mapFrame").style.display = "none";
+        return;
+    }
+
+    const { data } = await supabaseClient.auth.getUser();
+
+    updateUI(data?.user?.email);
     loadMap();
 };
 </script>

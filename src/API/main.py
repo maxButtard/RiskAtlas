@@ -89,11 +89,12 @@ def index():
 def map_html():
     # 🔐 Auth
     token = request.args.get("token")
-
+    print('token=',token)
     if not token:
         return "Unauthorized - no token", 401
 
     user = get_user(token)
+    print('user=',user)
 
     if not user:
         return "Unauthorized - invalid token", 401
