@@ -7,8 +7,8 @@ import os
 from dotenv import load_dotenv
 import requests
 
-from visualization import create_map, create_emergency_map
-from geo_utils import load_geo_data
+from src.API.visualization import create_map, create_emergency_map
+from src.API.geo_utils import load_geo_data
 
 # 🔐 Load env
 load_dotenv()
