@@ -9,31 +9,30 @@
 
 <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">🌍 Risk Atlas</div>
-
-    <!-- LOGIN BAR -->
-    <div class="login-bar">
-        <input id="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <button onclick="logout()">Logout</button>
+    <!-- ===== TITLE ===== -->
+    <div class="title-bar">
+        🌍 Risk Atlas
     </div>
 
-    <!-- TABS -->
-    <div class="tabs">
-        <a href="/?tab=maps&score={{ selected_score }}&colormap={{ selected_colormap }}&only_impl={{ 'true' if only_impl else 'false' }}"
-           class="{% if selected_tab == 'maps' %}active{% endif %}">🗺️ Maps</a>
+    <!-- ===== NAV + LOGIN ===== -->
+    <div class="nav-bar">
 
-        <a href="/?tab=implementation"
-           class="{% if selected_tab == 'implementation' %}active{% endif %}">⚙️ Implementation</a>
+        <div class="nav-left">
+            <a href="/?tab=maps" class="{% if selected_tab == 'maps' %}active{% endif %}">🗺️ Maps</a>
+            <a href="/?tab=implementation" class="{% if selected_tab == 'implementation' %}active{% endif %}">⚙️ Implementation</a>
+            <a href="/?tab=emergency" class="{% if selected_tab == 'emergency' %}active{% endif %}">🚨 Emergency</a>
+        </div>
 
-        <a href="/?tab=emergency&risk={{ selected_risk }}"
-           class="{% if selected_tab == 'emergency' %}active{% endif %}">🚨 Emergency</a>
+        <div class="nav-right">
+            <input id="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+
     </div>
 
-    <!-- ================= MAP TAB ================= -->
-    {% if selected_tab == "maps" %}
+    <!-- ===== MAIN ===== -->
     <div class="main">
 
         <div class="map">
@@ -42,13 +41,11 @@
 
         <div class="sidebar">
 
-            <!-- SCORE -->
             <div class="box">
                 <h3>Score</h3>
 
                 <form method="get">
                     <input type="hidden" name="tab" value="maps">
-                    <input type="hidden" name="colormap" value="{{ selected_colormap }}">
 
                     <select name="score">
                         {% for col in scores %}
@@ -68,22 +65,17 @@
                 </form>
             </div>
 
-            <!-- COLORBAR -->
             <div class="box">
                 <h3>Color Scale</h3>
 
                 <form method="get">
                     <input type="hidden" name="tab" value="maps">
-                    <input type="hidden" name="score" value="{{ selected_score }}">
-                    <input type="hidden" name="only_impl" value="{{ 'true' if only_impl else 'false' }}">
 
                     <select name="colormap">
-                        <option value="Blues" {% if selected_colormap=="Blues" %}selected{% endif %}>Blues</option>
-                        <option value="Greens" {% if selected_colormap=="Greens" %}selected{% endif %}>Greens</option>
-                        <option value="Reds" {% if selected_colormap=="Reds" %}selected{% endif %}>Reds</option>
-                        <option value="Oranges" {% if selected_colormap=="Oranges" %}selected{% endif %}>Oranges</option>
-                        <option value="Viridis" {% if selected_colormap=="Viridis" %}selected{% endif %}>Viridis</option>
-                        <option value="Plasma" {% if selected_colormap=="Plasma" %}selected{% endif %}>Plasma</option>
+                        <option value="Blues">Blues</option>
+                        <option value="Greens">Greens</option>
+                        <option value="Reds">Reds</option>
+                        <option value="Viridis">Viridis</option>
                     </select>
 
                     <button type="submit">Apply</button>
@@ -93,83 +85,12 @@
         </div>
 
     </div>
-    {% endif %}
-
-    <!-- ================= IMPLEMENTATION TAB ================= -->
-    {% if selected_tab == "implementation" %}
-    <div class="main">
-
-        <div class="map box">
-            <h3>Final Risk Score</h3>
-            {% if final_score %}
-                <div class="score">{{ final_score }}</div>
-            {% else %}
-                <p>No calculation yet</p>
-            {% endif %}
-        </div>
-
-        <div class="sidebar">
-            <div class="box">
-                <h3>Country Analysis</h3>
-
-                <form method="post" action="/implementation">
-                    <label>Country</label>
-                    <select name="country">
-                        {% for c in countries %}
-                        <option value="{{ c }}">{{ c }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <label>Number of factories</label>
-                    <input type="number" name="factories" value="1">
-
-                    <label>People on site</label>
-                    <input type="number" name="people" value="100">
-
-                    <button type="submit">Compute Risk</button>
-                </form>
-            </div>
-        </div>
-
-    </div>
-    {% endif %}
-
-    <!-- ================= EMERGENCY TAB ================= -->
-    {% if selected_tab == "emergency" %}
-    <div class="main">
-
-        <div class="map">
-            <iframe src="/emergency_map?risk={{ selected_risk }}"></iframe>
-        </div>
-
-        <div class="sidebar">
-            <div class="box">
-                <h3>Risk Type</h3>
-
-                <form method="get">
-                    <input type="hidden" name="tab" value="emergency">
-
-                    <select name="risk">
-                        <option value="cyclone" {% if selected_risk=="cyclone" %}selected{% endif %}>Cyclone / Tornado</option>
-                        <option value="war" {% if selected_risk=="war" %}selected{% endif %}>War</option>
-                        <option value="tsunami" {% if selected_risk=="tsunami" %}selected{% endif %}>Tsunami / Flood</option>
-                        <option value="earthquake" {% if selected_risk=="earthquake" %}selected{% endif %}>Earthquake</option>
-                    </select>
-
-                    <button type="submit">Update</button>
-                </form>
-            </div>
-        </div>
-
-    </div>
-    {% endif %}
 
 </div>
 
 <script>
 const supabaseClient = supabase.createClient(
-    "https://xccdxewtvkscnudynbsx.supabase.co",
-    "YOUR_ANON_KEY"
+    "https://xccdxewtvkscnudynbsx.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2R4ZXd0dmtzY251ZHluYnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzMxMjAsImV4cCI6MjA5MjI0OTEyMH0.LuVVtBh413nXknaO-NXtBpZT-V61XQbkfvHtr3BOiwE"
 );
 
 async function login() {
@@ -177,16 +98,20 @@ async function login() {
     const password = document.getElementById("password").value;
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
+        email,
+        password
     });
 
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
     if (error) {
-        alert("Login failed");
+        alert(error.message);
         return;
     }
 
     localStorage.setItem("token", data.session.access_token);
+    alert("Login success");
     loadMap();
 }
 
@@ -198,14 +123,20 @@ async function logout() {
 
 function loadMap() {
     const token = localStorage.getItem("token") || "";
-    const iframe = document.getElementById("mapFrame");
-
-    if (iframe) {
-        iframe.src = "/map_html?score={{ selected_score }}&colormap={{ selected_colormap }}&only_impl={{ 'true' if only_impl else 'false' }}&token=" + encodeURIComponent(token);
-    }
+    document.getElementById("mapFrame").src =
+        "/map_html?token=" + encodeURIComponent(token);
 }
 
-window.onload = loadMap;
+window.onload = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Please login first");
+        return;
+    }
+
+    loadMap();
+};
 </script>
 
 </body>

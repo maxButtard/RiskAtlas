@@ -24,10 +24,14 @@ def get_user(token):
 
     response = requests.get(
         f"{SUPABASE_URL}/auth/v1/user",
-        headers={"Authorization": f"Bearer {token}"}
+        headers={
+            "Authorization": f"Bearer {token}",
+            "apikey": os.getenv("SUPABASE_ANON_KEY")  # 🔥 AJOUT ICI
+        }
     )
 
     if response.status_code != 200:
+        print("AUTH ERROR:", response.text)
         return None
 
     return response.json()
@@ -83,6 +87,12 @@ def index():
 # Map endpoint (with auth)
 @app.route("/map_html")
 def map_html():
+    # 🔐 Auth
+    token = request.args.get("token")
+    user = get_user(token)
+
+    if not user:
+        return "Unauthorized", 401
 
     df_risk = pd.read_sql('SELECT * FROM "External_risk"', engine)
     df_emergency = pd.read_sql('SELECT * FROM "Emergency"', engine)
@@ -93,12 +103,7 @@ def map_html():
     colormap = request.args.get("colormap", "Blues")
     only_impl = request.args.get("only_impl") == "true"
 
-    # 🔐 Auth
-    token = request.args.get("token")
-    user = get_user(token)
-
-    if not user:
-        return "Unauthorized", 401
+    
 
     user_email = user.get("email")
 
