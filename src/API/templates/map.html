@@ -130,7 +130,11 @@ function loadMap() {
 window.onload = () => {
     const token = localStorage.getItem("token");
 
+    const iframe = document.getElementById("mapFrame");
+
     if (!token) {
+        iframe.src = "";
+        iframe.style.display = "none";
         alert("Please login first");
         return;
     }

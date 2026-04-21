@@ -89,10 +89,14 @@ def index():
 def map_html():
     # 🔐 Auth
     token = request.args.get("token")
+
+    if not token:
+        return "Unauthorized - no token", 401
+
     user = get_user(token)
 
     if not user:
-        return "Unauthorized", 401
+        return "Unauthorized - invalid token", 401
 
     df_risk = pd.read_sql('SELECT * FROM "External_risk"', engine)
     df_emergency = pd.read_sql('SELECT * FROM "Emergency"', engine)
