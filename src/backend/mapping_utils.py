@@ -34,6 +34,29 @@ def get_missing_countries(df: pd.DataFrame, geo_countries: list) -> pd.DataFrame
     df = df[df['Country'].isin(geo_countries)]
     
     return df
+
+def group_vote(row, cols):
+    """
+    Compute the average vote across a group of sanction indicators.
+
+    Parameters
+    ----------
+    row : pd.Series
+        Row of the dataframe
+    cols : list
+        List of columns representing a sanction group
+
+    Returns
+    -------
+    float or None
+        Mean value of available indicators, or None if all are missing
+    """
+    values = row[cols].dropna()
+    
+    if len(values) == 0:
+        return None
+    
+    return values.mean()
     
 def clean_raw_data(df: Dict, geo_countries: list) -> pd.DataFrame:
     """
@@ -104,29 +127,6 @@ def clean_raw_data(df: Dict, geo_countries: list) -> pd.DataFrame:
     #stab_gouv = get_missing_countries(stab_gouv, geo_countries)[['Country','governance_score']]
     dict_final['governance']=stab_gouv
     
-    #pol_scantions
-    def group_vote(row, cols):
-        """
-        Compute the average vote across a group of sanction indicators.
-    
-        Parameters
-        ----------
-        row : pd.Series
-            Row of the dataframe
-        cols : list
-            List of columns representing a sanction group
-    
-        Returns
-        -------
-        float or None
-            Mean value of available indicators, or None if all are missing
-        """
-        values = row[cols].dropna()
-        
-        if len(values) == 0:
-            return None
-        
-        return values.mean()
     
     pol_sanctions=df['sanctions']
     groups = {
@@ -176,9 +176,9 @@ def clean_raw_data(df: Dict, geo_countries: list) -> pd.DataFrame:
     
     #nature
     natural_hazard=df['climate']
-    natural_hazard=natural_hazard.rename(columns={natural_hazard.columns[10]:'Coastal flood exposure',
-    natural_hazard.columns[9]:'Cyclone exposure'})
-    natural_hazard = natural_hazard[['Country','Coastal flood exposure','Cyclone exposure','INFORM Natural Hazard']]
+    natural_hazard = natural_hazard[['Country','Physical exposure to river flood','Physical exposure to coastal flood',
+                                     'Physical exposure to tropical cyclone','Physical exposure to tsunami',
+                                     'Physical exposure to earthquake']]
     natural_hazard = natural_hazard.drop(natural_hazard.index[:3])
     natural_hazard =get_missing_countries(natural_hazard, geo_countries)
     dict_final['climate']=natural_hazard

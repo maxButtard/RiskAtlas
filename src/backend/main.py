@@ -26,7 +26,7 @@ def main():
     # PATHS
     # =========================
     sample_path = BASE_DIR / "data" / "raw" / "summary.xlsx"
-    target = "governance_score"
+    target = "score_natural_hazard"
 
     mapping_path = BASE_DIR / "data" / "mapping" / "mapping_dataset.csv"
 
@@ -44,7 +44,7 @@ def main():
     # =========================
     # LOAD DATA
     # =========================
-    if sample_path == BASE_DIR / "data" / "sample" / "sample_dataset.xlsx":
+    if sample_path == BASE_DIR / "data" / "example" / "sample_dataset.xlsx":
         print("⚠️ Using sample dataset")
 
         df = load_example(sample_path)
@@ -72,7 +72,22 @@ def main():
     # COMPUTE SCORE
     # =========================
     df = compute_score(df)
-
+    cols_to_keep = [
+    "Country",
+    "fatality_score",
+    "terrorism_score",
+    "governance_score",
+    "score_pol_corruption",
+    "score_security",
+    "score_pol_sanctions_international",
+    "score_violence_events",
+    "score_political",
+    "score_natural_hazard",
+    "score_final"
+    ]
+    
+    df_filtered = df[cols_to_keep]
+    df_filtered.to_csv(r"C:\Users\buttard\Documents\RiskAltas\data\sql\risk.csv", index=False)
 
     # =========================
     # CHECK TARGET

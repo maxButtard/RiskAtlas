@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Risk Atlas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">🌍 Risk Atlas</div>
+
+    <!-- LOGIN BAR -->
+    <div class="login-bar">
+        <input id="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <a href="/?tab=maps&score={{ selected_score }}&colormap={{ selected_colormap }}&only_impl={{ 'true' if only_impl else 'false' }}"
+           class="{% if selected_tab == 'maps' %}active{% endif %}">🗺️ Maps</a>
+
+        <a href="/?tab=implementation"
+           class="{% if selected_tab == 'implementation' %}active{% endif %}">⚙️ Implementation</a>
+
+        <a href="/?tab=emergency&risk={{ selected_risk }}"
+           class="{% if selected_tab == 'emergency' %}active{% endif %}">🚨 Emergency</a>
+    </div>
+
+    <!-- ================= MAP TAB ================= -->
+    {% if selected_tab == "maps" %}
+    <div class="main">
+
+        <div class="map">
+            <iframe id="mapFrame"></iframe>
+        </div>
+
+        <div class="sidebar">
+
+            <!-- SCORE -->
+            <div class="box">
+                <h3>Score</h3>
+
+                <form method="get">
+                    <input type="hidden" name="tab" value="maps">
+                    <input type="hidden" name="colormap" value="{{ selected_colormap }}">
+
+                    <select name="score">
+                        {% for col in scores %}
+                        <option value="{{ col }}" {% if col == selected_score %}selected{% endif %}>
+                            {{ col }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="only_impl" value="true"
+                               {% if only_impl %}checked{% endif %}>
+                        Only our implementations
+                    </label>
+
+                    <button type="submit">Update</button>
+                </form>
+            </div>
+
+            <!-- COLORBAR -->
+            <div class="box">
+                <h3>Color Scale</h3>
+
+                <form method="get">
+                    <input type="hidden" name="tab" value="maps">
+                    <input type="hidden" name="score" value="{{ selected_score }}">
+                    <input type="hidden" name="only_impl" value="{{ 'true' if only_impl else 'false' }}">
+
+                    <select name="colormap">
+                        <option value="Blues" {% if selected_colormap=="Blues" %}selected{% endif %}>Blues</option>
+                        <option value="Greens" {% if selected_colormap=="Greens" %}selected{% endif %}>Greens</option>
+                        <option value="Reds" {% if selected_colormap=="Reds" %}selected{% endif %}>Reds</option>
+                        <option value="Oranges" {% if selected_colormap=="Oranges" %}selected{% endif %}>Oranges</option>
+                        <option value="Viridis" {% if selected_colormap=="Viridis" %}selected{% endif %}>Viridis</option>
+                        <option value="Plasma" {% if selected_colormap=="Plasma" %}selected{% endif %}>Plasma</option>
+                    </select>
+
+                    <button type="submit">Apply</button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- ================= IMPLEMENTATION TAB ================= -->
+    {% if selected_tab == "implementation" %}
+    <div class="main">
+
+        <div class="map box">
+            <h3>Final Risk Score</h3>
+            {% if final_score %}
+                <div class="score">{{ final_score }}</div>
+            {% else %}
+                <p>No calculation yet</p>
+            {% endif %}
+        </div>
+
+        <div class="sidebar">
+            <div class="box">
+                <h3>Country Analysis</h3>
+
+                <form method="post" action="/implementation">
+                    <label>Country</label>
+                    <select name="country">
+                        {% for c in countries %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Number of factories</label>
+                    <input type="number" name="factories" value="1">
+
+                    <label>People on site</label>
+                    <input type="number" name="people" value="100">
+
+                    <button type="submit">Compute Risk</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- ================= EMERGENCY TAB ================= -->
+    {% if selected_tab == "emergency" %}
+    <div class="main">
+
+        <div class="map">
+            <iframe src="/emergency_map?risk={{ selected_risk }}"></iframe>
+        </div>
+
+        <div class="sidebar">
+            <div class="box">
+                <h3>Risk Type</h3>
+
+                <form method="get">
+                    <input type="hidden" name="tab" value="emergency">
+
+                    <select name="risk">
+                        <option value="cyclone" {% if selected_risk=="cyclone" %}selected{% endif %}>Cyclone / Tornado</option>
+                        <option value="war" {% if selected_risk=="war" %}selected{% endif %}>War</option>
+                        <option value="tsunami" {% if selected_risk=="tsunami" %}selected{% endif %}>Tsunami / Flood</option>
+                        <option value="earthquake" {% if selected_risk=="earthquake" %}selected{% endif %}>Earthquake</option>
+                    </select>
+
+                    <button type="submit">Update</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+const supabaseClient = supabase.createClient(
+    "https://xccdxewtvkscnudynbsx.supabase.co",
+    "YOUR_ANON_KEY"
+);
+
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        alert("Login failed");
+        return;
+    }
+
+    localStorage.setItem("token", data.session.access_token);
+    loadMap();
+}
+
+async function logout() {
+    await supabaseClient.auth.signOut();
+    localStorage.removeItem("token");
+    loadMap();
+}
+
+function loadMap() {
+    const token = localStorage.getItem("token") || "";
+    const iframe = document.getElementById("mapFrame");
+
+    if (iframe) {
+        iframe.src = "/map_html?score={{ selected_score }}&colormap={{ selected_colormap }}&only_impl={{ 'true' if only_impl else 'false' }}&token=" + encodeURIComponent(token);
+    }
+}
+
+window.onload = loadMap;
+</script>
+
+</body>
+</html>

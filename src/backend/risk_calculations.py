@@ -156,15 +156,22 @@ def compute_natural_score(df: pd.DataFrame) -> pd.DataFrame:
         - 'score_natural_hazard'
     """
     df = df.copy()
-
-    df["score_natural_hazard"] = df[
-        [
-            "Coastal flood exposure",
-            "Cyclone exposure",
-            "INFORM Natural Hazard",
-        ]
+    df["flood_exposure"] = df[
+    [
+        'Physical exposure to river flood',
+        'Physical exposure to coastal flood'
+    ]
     ].mean(axis=1)
-
+    
+    df["score_natural_hazard"] = df[
+    [
+        'flood_exposure',
+        'Physical exposure to tropical cyclone',
+        'Physical exposure to tsunami',
+        'Physical exposure to earthquake'
+    ]
+    ].mean(axis=1)*10
+    
     return df
 
 
