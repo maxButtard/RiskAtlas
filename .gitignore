@@ -16,5 +16,7 @@ data/mapping/*
 __pycache__/
 *.pyc
 
+src/backend/
+
 # GENERATED
 arborescence.txt

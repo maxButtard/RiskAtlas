@@ -8,3 +8,4 @@ branca
 python-dotenv
 requests
 shapely
+gunicorn
