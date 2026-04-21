@@ -1,33 +1,20 @@
-# ======================
-# Protected Data (sensitive)
-# ======================
+# DATABASE
+data/sql/*.db
+
+# RAW DATA
 data/raw/*
-data/processed/*
+data/sql/*.csv
+data/mapping/*
 
-# ======================
-# Outputs (generated files)
-# ======================
-outputs/*
+# KEEP EXAMPLES
+!data/example/
 
-# ======================
-# Data files (global rule)
-# ======================
-*.xlsx
-*.csv
+# ENV
+.env
 
-# Allow sample CSV explicitly
-!data/sample/sample_dataset.xlsx
-!data/outputs/map.html
-!data/mapping/mapping_dataset.csv
-
-
-# ======================
-# Python
-# ======================
+# PYTHON
 __pycache__/
 *.pyc
 
-# ======================
-# Environment
-# ======================
-.env
+# GENERATED
+arborescence.txt

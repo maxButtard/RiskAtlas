@@ -100,7 +100,7 @@ Jordan,Jordan
 Kazakhstan,Kazakhstan
 Kenya,Kenya
 Kosovo,Kosovo
-Kosovo (under UNSC res. 1244),Kosovo
+"Kosovo (under UNSC res. 1244)",Kosovo
 Kuwait,Kuwait
 Kyrgyz Republic,Kyrgyzstan
 Kyrgyzstan,Kyrgyzstan
@@ -184,7 +184,7 @@ Eswatini,Swaziland
 eSwatini,Swaziland
 Sweden,Sweden
 Switzerland,Switzerland
-Serbia,Syria
+Serbia,Republic of Serbia
 Syria,Syria
 Syrian Arab Republic,Syria
 Taiwan,Taiwan
@@ -213,8 +213,8 @@ Venezuela,Venezuela
 Venezuela (Bolivarian Republic of),Venezuela
 Viet Nam,Vietnam
 Vietnam,Vietnam
-Palestine,West Bank
-State of Palestine,West Bank
+Palestine,Palestinian Territories
+State of Palestine,Palestinian Territories
 Yemen,Yemen
 Zambia,Zambia
 Zimbabwe,Zimbabwe
@@ -231,7 +231,7 @@ Bahrain,
 Balkans,
 Barbados,
 Bermuda,
-"Bonaire, Sint Eustatius and Saba",
+Bonaire, 
 British Virgin Islands,
 Cabo Verde,
 Cape Verde,
@@ -253,7 +253,6 @@ Eastern and South-Eastern Asia,
 Europe,
 Europe & Central Asia,
 Europe and Northern America,
-"Europe, Northern America, Australia, and New Zealand",
 Faroe Islands,
 Gibraltar,
 Grenada,
@@ -274,8 +273,6 @@ Latin America & Caribbean,
 Latin America and the Caribbean,
 Least developed countries,
 Less developed regions,
-"Less developed regions, excluding China",
-"Less developed regions, excluding least developed countries",
 Liechtenstein,
 Low-and-Lower-middle-income countries,
 Low-and-middle-income countries,
@@ -308,7 +305,6 @@ Northern Mariana Islands,
 Oceania,
 Oceania (excluding Australia and New Zealand),
 Polynesia,
-"SIDS Atlantic, Indian Ocean and South China Sea (AIS)",
 SIDS Caribbean,
 SIDS Pacific,
 Saint Barthélemy,
