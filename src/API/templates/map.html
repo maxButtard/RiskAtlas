@@ -20,17 +20,17 @@
     <div class="nav-bar">
 
         <div class="nav-left">
-
+        
             <a href="/?tab=maps{% if token %}&token={{ token }}{% endif %}"
                class="{% if selected_tab == 'maps' %}active{% endif %}">
                 🗺️ Maps
             </a>
-
+        
             <a href="/?tab=emergency{% if token %}&token={{ token }}{% endif %}"
                class="{% if selected_tab == 'emergency' %}active{% endif %}">
                 🚨 Emergency
             </a>
-
+        
         </div>
 
         <div class="nav-right">
@@ -203,33 +203,62 @@ function loadMap() {
 
     iframe.style.display = "block";
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(
+        window.location.search
+    );
 
-    const tab =
-        params.get("tab") || "maps";
+    const tab = params.get("tab") || "maps";
 
     let url = "";
+
+    // =====================================================================
+    // EMERGENCY
+    // =====================================================================
 
     if (tab === "emergency") {
 
         url = "/emergency_map";
 
-    } else {
-
-        const score =
-            params.get("score") || "Population";
-
-        const colormap =
-            params.get("colormap") || "Blues";
-
-        url =
-            `/map_html?score=${encodeURIComponent(score)}&colormap=${encodeURIComponent(colormap)}`;
     }
+
+    // =====================================================================
+    // STANDARD MAP
+    // =====================================================================
+
+    else {
+
+        const score = (
+            params.get("score")
+            || "Population"
+        );
+
+        const colormap = (
+            params.get("colormap")
+            || "Blues"
+        );
+
+        url = (
+            "/map_html"
+            + `?score=${encodeURIComponent(score)}`
+            + `&colormap=${encodeURIComponent(colormap)}`
+        );
+    }
+
+    // =====================================================================
+    // TOKEN
+    // =====================================================================
 
     if (token) {
 
-        url +=
-            `&token=${encodeURIComponent(token)}`;
+        url += (
+            url.includes("?")
+            ? "&"
+            : "?"
+        );
+
+        url += (
+            `token=${encodeURIComponent(token)}`
+        );
     }
 
     iframe.src = url;
