@@ -242,6 +242,33 @@ def map_html():
         )
 
     # =========================================================================
+    # IMPLEMENTATION FILTER
+    # =========================================================================
+    
+    only_impl = (
+        request.args.get(
+            "only_impl",
+            "false",
+        ).lower() == "true"
+    )
+    
+    if only_impl:
+    
+        df_emergency = pd.read_sql(
+            'SELECT * FROM "Emergency"',
+            engine,
+        )
+    
+        countries_impl = set(
+            df_emergency["Country"]
+        )
+    
+        df_risk = df_risk[
+            df_risk["Country"].isin(
+                countries_impl
+            )
+        ]
+    # =========================================================================
     # MAP VALUES
     # =========================================================================
 
@@ -282,15 +309,54 @@ def emergency_map():
     """
     Generate emergency map HTML.
 
-    Displays:
-    - Emergency contact
-    - Emergency phone number
+    Access restricted to authenticated users.
 
     Returns
     -------
     str
         Rendered Folium map HTML.
     """
+
+    token = request.args.get("token")
+
+    user = get_user(token)
+
+    # =========================================================================
+    # AUTHENTICATION REQUIRED
+    # =========================================================================
+
+    if user is None:
+
+        return """
+        <html>
+        <body style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+            font-family:sans-serif;
+            background:#f5f7fa;
+        ">
+            <div style="
+                background:white;
+                padding:40px;
+                border-radius:12px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.08);
+                text-align:center;
+            ">
+                <h2>🔒 Authentication Required</h2>
+
+                <p>
+                    Please login to access the emergency map.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+    # =========================================================================
+    # MAP
+    # =========================================================================
 
     risk = request.args.get(
         "risk",
@@ -304,13 +370,6 @@ def emergency_map():
         engine,
     )
 
-    df_emergency = df_emergency.dropna(
-        subset=[
-            "Phone",
-            "Contact",
-        ],
-    )
-
     emergency = create_emergency_map(
         df_emergency,
         geo,
@@ -318,7 +377,6 @@ def emergency_map():
     )
 
     return emergency.get_root().render()
-
 
 # =============================================================================
 # RUN

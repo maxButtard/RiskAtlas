@@ -68,63 +68,103 @@
         <div class="sidebar">
 
             <div class="box">
-
+                
                 <h3>Score</h3>
-
+            
                 <form method="get">
-
-                    <input type="hidden" name="tab" value="maps">
-
+                    <input
+                        type="hidden"
+                        name="colormap"
+                        id="hiddenColormap"
+                        value="{{ selected_colormap }}"
+                    >
+                    
+                    <input
+                        type="hidden"
+                        name="tab"
+                        value="maps"
+                    >
+            
                     {% if token %}
-                    <input type="hidden" name="token" value="{{ token }}">
+                    <input
+                        type="hidden"
+                        name="token"
+                        value="{{ token }}"
+                    >
                     {% endif %}
-
+            
                     <select name="score">
-
+            
                         {% for col in scores %}
-
-                        <option value="{{ col }}"
-                                {% if col == selected_score %}selected{% endif %}>
+            
+                        <option
+                            value="{{ col }}"
+                            {% if col == selected_score %}selected{% endif %}
+                        >
                             {{ col }}
                         </option>
-
+            
                         {% endfor %}
-
+            
                     </select>
-
+            
+                    <label class="checkbox-label">
+            
+                        <input
+                            type="checkbox"
+                            id="implCheckbox"
+                            name="only_impl"
+                            value="true"
+                            {% if request.args.get("only_impl") == "true" %}
+                            checked
+                            {% endif %}
+                        >
+            
+                        Only our implementations
+            
+                    </label>
+            
                     <button type="submit">
                         Update
                     </button>
-
+            
                 </form>
-
+            
             </div>
 
             <div class="box">
 
                 <h3>Color Scale</h3>
-
-                <form method="get">
-
-                    <input type="hidden" name="tab" value="maps">
-
-                    {% if token %}
-                    <input type="hidden" name="token" value="{{ token }}">
-                    {% endif %}
-
-                    <select name="colormap">
-
-                        <option value="Blues">Blues</option>
-                        <option value="Greens">Greens</option>
-                        <option value="Reds">Reds</option>
-                        <option value="Viridis">Viridis</option>
-
-                    </select>
-
-                    <button type="submit">
-                        Apply
-                    </button>
-
+            
+                <select id="colormapSelect">
+            
+                    <option value="Blues"
+                    {% if selected_colormap == "Blues" %}selected{% endif %}>
+                        Blues
+                    </option>
+                    
+                    <option value="Greens"
+                    {% if selected_colormap == "Greens" %}selected{% endif %}>
+                        Greens
+                    </option>
+                    
+                    <option value="Reds"
+                    {% if selected_colormap == "Reds" %}selected{% endif %}>
+                        Reds
+                    </option>
+                    
+                    <option value="Viridis"
+                    {% if selected_colormap == "Viridis" %}selected{% endif %}>
+                        Viridis
+                    </option>
+            
+                </select>
+            
+                <button onclick="updateColormap()">
+                    Apply
+                </button>
+            
+            </div>
                 </form>
 
             </div>
@@ -151,31 +191,56 @@ const supabaseClient = supabase.createClient(
 
 async function login() {
 
-    const email = document.getElementById("email").value;
+    const email = document.getElementById(
+        "email"
+    ).value;
 
-    const password = document.getElementById("password").value;
+    const password = document.getElementById(
+        "password"
+    ).value;
 
     const { data, error } =
         await supabaseClient.auth.signInWithPassword({
             email,
-            password
+            password,
         });
 
     if (error) {
+
         alert(error.message);
+
         return;
     }
 
+    // ================================================================
+    // SAVE TOKEN
+    // ================================================================
+
     sessionStorage.setItem(
         "token",
-        data.session.access_token
+        data.session.access_token,
     );
 
-    window.location.href =
-        "/?token=" +
-        encodeURIComponent(data.session.access_token);
-}
+    // ================================================================
+    // KEEP CURRENT STATE
+    // ================================================================
 
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    params.set(
+        "token",
+        data.session.access_token,
+    );
+
+    // ================================================================
+    // RELOAD WITH SAME STATE
+    // ================================================================
+
+    window.location.href =
+        "/?" + params.toString();
+}
 
 /* ========================================================================= */
 /* LOGOUT */
@@ -187,10 +252,23 @@ async function logout() {
 
     sessionStorage.removeItem("token");
 
-    window.location.href = "/";
+    // ================================================================
+    // KEEP CURRENT STATE
+    // ================================================================
+
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    params.delete("token");
+
+    // ================================================================
+    // RELOAD WITH SAME STATE
+    // ================================================================
+
+    window.location.href =
+        "/?" + params.toString();
 }
-
-
 /* ========================================================================= */
 /* MAP */
 /* ========================================================================= */
@@ -208,6 +286,9 @@ function loadMap() {
     );
 
     const tab = params.get("tab") || "maps";
+
+    const onlyImpl =
+    params.get("only_impl") === "true";
 
     let url = "";
 
@@ -241,6 +322,7 @@ function loadMap() {
             "/map_html"
             + `?score=${encodeURIComponent(score)}`
             + `&colormap=${encodeURIComponent(colormap)}`
+            + `&only_impl=${onlyImpl}`
         );
     }
 
@@ -263,7 +345,53 @@ function loadMap() {
 
     iframe.src = url;
 }
+/* ========================================================================= */
+/* COLORMAP */
+/* ========================================================================= */
 
+function updateColormap() {
+
+    const iframe = document.getElementById(
+        "mapFrame"
+    );
+
+    const selectedColormap =
+        document.getElementById(
+            "colormapSelect"
+        ).value;
+
+    // ================================================================
+    // UPDATE HIDDEN FORM VALUE
+    // ================================================================
+
+    document.getElementById(
+        "hiddenColormap"
+    ).value = selectedColormap;
+
+    // ================================================================
+    // UPDATE CURRENT MAP
+    // ================================================================
+
+    const currentUrl = new URL(
+        iframe.src,
+        window.location.origin
+    );
+
+    currentUrl.searchParams.set(
+        "colormap",
+        selectedColormap
+    );
+
+    iframe.src = currentUrl.toString();
+}
+/* ========================================================================= */
+/* IMPLEMENTATION FILTER */
+/* ========================================================================= */
+
+function updateImplementationFilter() {
+
+    loadMap();
+}
 
 /* ========================================================================= */
 /* UI */

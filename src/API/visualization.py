@@ -62,42 +62,152 @@ def create_map(df, geo_data, target, colormap_name="Blues"):
     return m
 
 
-def create_emergency_map(df, geo_data, risk):
+def create_emergency_map(
+    df,
+    geo_data,
+    risk,
+):
+    """
+    Create emergency implementation map.
 
-    emergency_dict = df.set_index("Country").to_dict(orient="index")
-    m = folium.Map(location=[20, 0], zoom_start=2)
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Emergency implementation dataframe.
+
+    geo_data : dict
+        GeoJSON world geometry.
+
+    risk : str
+        Selected risk type.
+
+    Returns
+    -------
+    folium.Map
+        Emergency Folium map.
+    """
+
+    emergency_dict = (
+        df
+        .set_index("Country")
+        .to_dict(orient="index")
+    )
+
+    emergency_map = folium.Map(
+        location=[20, 0],
+        zoom_start=2,
+    )
+
+    # =========================================================================
+    # STYLE
+    # =========================================================================
 
     def style(feature):
-        country = feature["properties"]["name"]
-        info = emergency_dict.get(country, {})
+
+        country = (
+            feature["properties"]["name"]
+        )
+
+        info = emergency_dict.get(
+            country,
+            {},
+        )
 
         if info.get("Contact"):
-            return {"fillColor": "#ef4444", "color": "black", "weight": 0.5, "fillOpacity": 0.7}
-        else:
-            return {"fillColor": "#ffffff", "color": "#d1d5db", "weight": 0.3, "fillOpacity": 0.2}
 
-    for f in geo_data["features"]:
-        country = f["properties"]["name"]
-        info = emergency_dict.get(country, {})
+            return {
+                "fillColor": "#ef4444",
+                "color": "black",
+                "weight": 0.5,
+                "fillOpacity": 0.7,
+            }
 
-        contact = info.get("Contact", {})
-        phone = contact.get("phone", "N/A")
-        email = contact.get("email", "N/A")
-        plants = info.get("Number of implementations", "N/A")
-        people = info.get("Number of people", "N/A")
+        return {
+            "fillColor": "#ffffff",
+            "color": "#d1d5db",
+            "weight": 0.3,
+            "fillOpacity": 0.2,
+        }
 
-        f["properties"]["tooltip"] = f"""
+    # =========================================================================
+    # TOOLTIP
+    # =========================================================================
+
+    filtered_features = []
+
+    for feature in geo_data["features"]:
+    
+        country = (
+            feature["properties"]["name"]
+        )
+    
+        info = emergency_dict.get(
+            country,
+            {},
+        )
+    
+        # ================================================================
+        # KEEP ONLY IMPLEMENTED COUNTRIES
+        # ================================================================
+    
+        if not info:
+            continue
+    
+        contact = info.get(
+            "Contact",
+            {},
+        )
+    
+        email = contact.get(
+            "email",
+            "N/A",
+        )
+    
+        phone = contact.get(
+            "phone",
+            "N/A",
+        )
+    
+        plants = info.get(
+            "Number of implementations",
+            "N/A",
+        )
+    
+        people = info.get(
+            "Number of people",
+            "N/A",
+        )
+    
+        feature["properties"]["tooltip"] = f"""
         <b>{country}</b><br>
+        📧 {email}<br>
         📞 {phone}<br>
-        📧 <a href="mailto:{email}">{email}</a><br>
         🏭 {plants}<br>
         👥 {people}
         """
-
+    
+        filtered_features.append(feature)
+    
+    # =========================================================================
+    # FILTERED GEOJSON
+    # =========================================================================
+    
+    filtered_geojson = {
+        "type": "FeatureCollection",
+        "features": filtered_features,
+    }
+    
+    # =========================================================================
+    # MAP
+    # =========================================================================
+    
     folium.GeoJson(
-        geo_data,
+        filtered_geojson,
         style_function=style,
-        tooltip=folium.GeoJsonTooltip(fields=["tooltip"], labels=False),
-    ).add_to(m)
+        tooltip=folium.GeoJsonTooltip(
+            fields=["tooltip"],
+            labels=False,
+        ),
+    ).add_to(emergency_map)
 
-    return m
+    return emergency_map
