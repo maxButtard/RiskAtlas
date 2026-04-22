@@ -108,7 +108,7 @@ async function login() {
         return;
     }
 
-    sessionStorage.setItem("token", data.session.access_token); // ✅ CHANGED
+    sessionStorage.setItem("token", data.session.access_token); 
     updateUI(data.user.email);
     loadMap();
 }
@@ -116,13 +116,13 @@ async function login() {
 /* ===== LOGOUT ===== */
 async function logout() {
     await supabaseClient.auth.signOut();
-    sessionStorage.removeItem("token"); // ✅ CHANGED
+    sessionStorage.removeItem("token"); 
     location.reload();
 }
 
 /* ===== LOAD MAP ===== */
 function loadMap() {
-    const token = sessionStorage.getItem("token"); // ✅ CHANGED
+    const token = sessionStorage.getItem("token");
     const iframe = document.getElementById("mapFrame");
 
     if (!token) {
@@ -137,7 +137,7 @@ function loadMap() {
 
 /* ===== UI STATE ===== */
 function updateUI(email=null) {
-    const token = sessionStorage.getItem("token"); // ✅ CHANGED
+    const token = sessionStorage.getItem("token"); 
 
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -175,7 +175,7 @@ window.onload = async () => {
 
         updateUI(data?.user?.email);
 
-        loadMap();
+        location.reload();
 
     }
 
