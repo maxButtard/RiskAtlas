@@ -10,12 +10,12 @@ import requests
 from src.API.visualization import create_map, create_emergency_map
 from src.API.geo_utils import load_geo_data
 
-# 🔐 Load env
+# Load env to ensure security
 load_dotenv()
 
 app = Flask(__name__)
 
-# 🔗 Supabase Auth URL
+# Supabase Auth URL
 SUPABASE_URL = "https://xccdxewtvkscnudynbsx.supabase.co"
 
 def get_user(token):
@@ -83,6 +83,9 @@ def index():
         final_score=None
     )
 
+@app.route("/health")
+def health():
+    return "ok"
 
 # Map endpoint (with auth)
 @app.route("/map_html")
@@ -112,7 +115,7 @@ def map_html():
 
     user_email = user.get("email")
 
-    # 🔥 Filter by user
+    # Filter by users if different level of authorisations
     if "email" in df_risk.columns:
         df_risk = df_risk[df_risk["email"] == user_email]
 
@@ -132,8 +135,10 @@ def map_html():
 
     return m.get_root().render()
 
+#def 
 
-# Emergency map (no auth for now)
+
+# Emergency map 
 @app.route("/emergency_map")
 def emergency_map():
 
