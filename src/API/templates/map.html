@@ -165,18 +165,31 @@ function updateUI(email=null) {
 
 /* ===== INIT ===== */
 window.onload = async () => {
-    const token = sessionStorage.getItem("token"); // ✅ CHANGED
 
-    if (!token) {
-        updateUI();
-        document.getElementById("mapFrame").style.display = "none";
-        return;
+    const token = sessionStorage.getItem("token");
+
+    // USER CONNECTED
+    if (token) {
+
+        const { data } = await supabaseClient.auth.getUser();
+
+        updateUI(data?.user?.email);
+
+        loadMap();
+
     }
 
-    const { data } = await supabaseClient.auth.getUser();
+    // PUBLIC ACCESS
+    else {
 
-    updateUI(data?.user?.email);
-    loadMap();
+        updateUI();
+
+        document.getElementById("mapFrame").style.display = "block";
+
+        document.getElementById("mapFrame").src =
+            "/map_html";
+
+    }
 };
 </script>
 

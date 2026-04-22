@@ -187,7 +187,6 @@ def index():
         final_score=None,
     )
 
-
 # =============================================================================
 # RISK MAP
 # =============================================================================
@@ -197,20 +196,23 @@ def map_html():
     """
     Generate interactive risk map.
 
-    Unauthenticated users:
-    - can only access Population map
+    Public users:
+    - Population only
 
     Authenticated users:
-    - can access all scores
+    - Full access
     """
 
     token = request.args.get("token")
 
     # =========================================================================
-    # OPTIONAL AUTH
+    # AUTH
     # =========================================================================
 
-    user = get_user(token) if token else None
+    user = None
+
+    if token:
+        user = get_user(token)
 
     # =========================================================================
     # LOAD DATA
@@ -236,10 +238,18 @@ def map_html():
     only_impl = request.args.get("only_impl") == "true"
 
     # =========================================================================
-    # AUTHORIZATION LEVEL
+    # PUBLIC MODE
     # =========================================================================
 
-    if user:
+    if user is None:
+
+        score = "Population"
+
+    # =========================================================================
+    # AUTHENTICATED MODE
+    # =========================================================================
+
+    else:
 
         score = request.args.get(
             "score",
@@ -253,11 +263,6 @@ def map_html():
             df_risk = df_risk[
                 df_risk["email"] == user_email
             ]
-
-    else:
-
-        # 🔥 Public mode
-        score = "Population"
 
     # =========================================================================
     # FILTER IMPLEMENTATIONS
