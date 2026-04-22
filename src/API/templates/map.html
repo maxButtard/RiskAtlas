@@ -2,9 +2,13 @@
 <html>
 <head>
     <title>Risk Atlas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
+
 <body>
 
 <div class="container">
@@ -16,181 +20,300 @@
     <div class="nav-bar">
 
         <div class="nav-left">
-            <a href="/?tab=maps" class="{% if selected_tab == 'maps' %}active{% endif %}">🗺️ Maps</a>
-            <a href="/?tab=implementation" class="{% if selected_tab == 'implementation' %}active{% endif %}">⚙️ Implementation</a>
-            <a href="/?tab=emergency" class="{% if selected_tab == 'emergency' %}active{% endif %}">🚨 Emergency</a>
+
+            <a href="/?tab=maps{% if token %}&token={{ token }}{% endif %}"
+               class="{% if selected_tab == 'maps' %}active{% endif %}">
+                🗺️ Maps
+            </a>
+
+            <a href="/?tab=emergency{% if token %}&token={{ token }}{% endif %}"
+               class="{% if selected_tab == 'emergency' %}active{% endif %}">
+                🚨 Emergency
+            </a>
+
         </div>
 
         <div class="nav-right">
+
             <span id="userInfo" style="display:none;"></span>
 
             <input id="email" placeholder="Email">
-            <input id="password" type="password" placeholder="Password">
 
-            <button id="loginBtn" onclick="login()">Login</button>
-            <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+            <input id="password"
+                   type="password"
+                   placeholder="Password">
+
+            <button id="loginBtn" onclick="login()">
+                Login
+            </button>
+
+            <button id="logoutBtn"
+                    onclick="logout()"
+                    style="display:none;">
+                Logout
+            </button>
+
         </div>
 
     </div>
 
-    <div class="main">
+    <div class="{% if selected_tab == 'emergency' %}main-emergency{% else %}main{% endif %}">
 
         <div class="map">
             <iframe id="mapFrame"></iframe>
         </div>
 
+        {% if selected_tab != 'emergency' %}
+
         <div class="sidebar">
 
             <div class="box">
+
                 <h3>Score</h3>
 
                 <form method="get">
+
                     <input type="hidden" name="tab" value="maps">
 
+                    {% if token %}
+                    <input type="hidden" name="token" value="{{ token }}">
+                    {% endif %}
+
                     <select name="score">
+
                         {% for col in scores %}
-                        <option value="{{ col }}" {% if col == selected_score %}selected{% endif %}>
+
+                        <option value="{{ col }}"
+                                {% if col == selected_score %}selected{% endif %}>
                             {{ col }}
                         </option>
+
                         {% endfor %}
+
                     </select>
 
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="only_impl" value="true"
-                               {% if only_impl %}checked{% endif %}>
-                        Only our implementations
-                    </label>
+                    <button type="submit">
+                        Update
+                    </button>
 
-                    <button type="submit">Update</button>
                 </form>
+
             </div>
 
             <div class="box">
+
                 <h3>Color Scale</h3>
 
                 <form method="get">
+
                     <input type="hidden" name="tab" value="maps">
 
+                    {% if token %}
+                    <input type="hidden" name="token" value="{{ token }}">
+                    {% endif %}
+
                     <select name="colormap">
+
                         <option value="Blues">Blues</option>
                         <option value="Greens">Greens</option>
                         <option value="Reds">Reds</option>
                         <option value="Viridis">Viridis</option>
+
                     </select>
 
-                    <button type="submit">Apply</button>
+                    <button type="submit">
+                        Apply
+                    </button>
+
                 </form>
+
             </div>
 
         </div>
+
+        {% endif %}
 
     </div>
 
 </div>
 
 <script>
+
 const supabaseClient = supabase.createClient(
     "https://xccdxewtvkscnudynbsx.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2R4ZXd0dmtzY251ZHluYnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzMxMjAsImV4cCI6MjA5MjI0OTEyMH0.LuVVtBh413nXknaO-NXtBpZT-V61XQbkfvHtr3BOiwE");
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjY2R4ZXd0dmtzY251ZHluYnN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzMxMjAsImV4cCI6MjA5MjI0OTEyMH0.LuVVtBh413nXknaO-NXtBpZT-V61XQbkfvHtr3BOiwE"
+);
 
-/* ===== LOGIN ===== */
+
+/* ========================================================================= */
+/* LOGIN */
+/* ========================================================================= */
+
 async function login() {
+
     const email = document.getElementById("email").value;
+
     const password = document.getElementById("password").value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
 
     if (error) {
         alert(error.message);
         return;
     }
 
-    sessionStorage.setItem("token", data.session.access_token); 
-    updateUI(data.user.email);
-    loadMap();
+    sessionStorage.setItem(
+        "token",
+        data.session.access_token
+    );
+
+    window.location.href =
+        "/?token=" +
+        encodeURIComponent(data.session.access_token);
 }
 
-/* ===== LOGOUT ===== */
+
+/* ========================================================================= */
+/* LOGOUT */
+/* ========================================================================= */
+
 async function logout() {
+
     await supabaseClient.auth.signOut();
-    sessionStorage.removeItem("token"); 
-    location.reload();
+
+    sessionStorage.removeItem("token");
+
+    window.location.href = "/";
 }
 
-/* ===== LOAD MAP ===== */
+
+/* ========================================================================= */
+/* MAP */
+/* ========================================================================= */
+
 function loadMap() {
+
     const token = sessionStorage.getItem("token");
+
     const iframe = document.getElementById("mapFrame");
 
-    if (!token) {
-        iframe.src = "";
-        iframe.style.display = "none";
-        return;
+    iframe.style.display = "block";
+
+    const params = new URLSearchParams(window.location.search);
+
+    const tab =
+        params.get("tab") || "maps";
+
+    let url = "";
+
+    if (tab === "emergency") {
+
+        url = "/emergency_map";
+
+    } else {
+
+        const score =
+            params.get("score") || "Population";
+
+        const colormap =
+            params.get("colormap") || "Blues";
+
+        url =
+            `/map_html?score=${encodeURIComponent(score)}&colormap=${encodeURIComponent(colormap)}`;
     }
 
-    iframe.style.display = "block";
-    iframe.src = "/map_html?token=" + encodeURIComponent(token);
+    if (token) {
+
+        url +=
+            `&token=${encodeURIComponent(token)}`;
+    }
+
+    iframe.src = url;
 }
 
-/* ===== UI STATE ===== */
-function updateUI(email=null) {
-    const token = sessionStorage.getItem("token"); 
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userInfo = document.getElementById("userInfo");
+/* ========================================================================= */
+/* UI */
+/* ========================================================================= */
+
+function updateUI(email=null) {
+
+    const token = sessionStorage.getItem("token");
+
+    const emailInput =
+        document.getElementById("email");
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const loginBtn =
+        document.getElementById("loginBtn");
+
+    const logoutBtn =
+        document.getElementById("logoutBtn");
+
+    const userInfo =
+        document.getElementById("userInfo");
 
     if (token) {
+
         emailInput.style.display = "none";
+
         passwordInput.style.display = "none";
+
         loginBtn.style.display = "none";
+
         logoutBtn.style.display = "inline-block";
 
         userInfo.style.display = "inline-block";
-        userInfo.innerText = email ? `👤 ${email}` : "👤 Connected";
+
+        userInfo.innerText =
+            email
+            ? `👤 ${email}`
+            : "👤 Connected";
+
     } else {
+
         emailInput.style.display = "inline-block";
+
         passwordInput.style.display = "inline-block";
+
         loginBtn.style.display = "inline-block";
+
         logoutBtn.style.display = "none";
 
         userInfo.style.display = "none";
     }
 }
 
-/* ===== INIT ===== */
+
+/* ========================================================================= */
+/* INIT */
+/* ========================================================================= */
+
 window.onload = async () => {
 
     const token = sessionStorage.getItem("token");
 
-    // USER CONNECTED
     if (token) {
 
-        const { data } = await supabaseClient.auth.getUser();
+        const { data } =
+            await supabaseClient.auth.getUser();
 
         updateUI(data?.user?.email);
 
-        location.reload();
-
-    }
-
-    // PUBLIC ACCESS
-    else {
+    } else {
 
         updateUI();
-
-        document.getElementById("mapFrame").style.display = "block";
-
-        document.getElementById("mapFrame").src =
-            "/map_html";
-
     }
+
+    loadMap();
 };
+
 </script>
 
 </body>
