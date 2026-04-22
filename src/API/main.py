@@ -1,43 +1,45 @@
-# main.py
-from flask import Flask, render_template, request
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
-import pandas as pd
+"""
+Risk Atlas API
+===============
+
+Main Flask application for:
+- Risk visualization
+- Emergency contacts
+- Implementation analysis
+- Supabase authentication
+"""
+
 import os
-from dotenv import load_dotenv
+from typing import Optional
+
+import pandas as pd
 import requests
 
-from src.API.visualization import create_map, create_emergency_map
-from src.API.geo_utils import load_geo_data
+from dotenv import load_dotenv
+from flask import Flask, render_template, request
 
-# Load env to ensure security
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
+
+from src.API.geo_utils import load_geo_data
+from src.API.visualization import create_emergency_map, create_map
+
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
 load_dotenv()
 
 app = Flask(__name__)
 
-# Supabase Auth URL
 SUPABASE_URL = "https://xccdxewtvkscnudynbsx.supabase.co"
 
-def get_user(token):
-    if not token:
-        return None
 
-    response = requests.get(
-        f"{SUPABASE_URL}/auth/v1/user",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "apikey": os.getenv("SUPABASE_ANON_KEY")  # 🔥 AJOUT ICI
-        }
-    )
+# =============================================================================
+# DATABASE
+# =============================================================================
 
-    if response.status_code != 200:
-        print("AUTH ERROR:", response.text)
-        return None
-
-    return response.json()
-
-
-# 🗄️ Database connection (Supabase Postgres)
 DATABASE_URL = URL.create(
     drivername="postgresql+psycopg2",
     username=os.getenv("DB_USER"),
@@ -50,29 +52,131 @@ DATABASE_URL = URL.create(
 engine = create_engine(DATABASE_URL)
 
 
-# 🌍 Main UI
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+
+def get_user(token: str) -> Optional[dict]:
+    """
+    Validate Supabase JWT token and return user information.
+
+    Parameters
+    ----------
+    token : str
+        Supabase JWT token.
+
+    Returns
+    -------
+    Optional[dict]
+        User dictionary if authenticated, else None.
+    """
+
+    if not token:
+        return None
+
+    response = requests.get(
+        f"{SUPABASE_URL}/auth/v1/user",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "apikey": os.getenv("SUPABASE_ANON_KEY"),
+        },
+    )
+
+    if response.status_code != 200:
+        print("AUTH ERROR:", response.text)
+        return None
+
+    return response.json()
+
+
+# =============================================================================
+# HEALTH CHECK
+# =============================================================================
+
+@app.route("/health")
+def health() -> tuple[str, int]:
+    """
+    Render health check endpoint.
+
+    Returns
+    -------
+    tuple[str, int]
+        Health status and HTTP code.
+    """
+
+    return "ok", 200
+
+
+# =============================================================================
+# MAIN PAGE
+# =============================================================================
+
 @app.route("/")
 def index():
+    """
+    Main UI page.
 
-    df_risk = pd.read_sql('SELECT * FROM "External_risk"', engine)
-    df_emergency = pd.read_sql('SELECT * FROM "Emergency"', engine)
+    Unauthenticated users:
+    - can only access Population score
+
+    Authenticated users:
+    - can access all scores
+    """
+
+    token = request.args.get("token")
+    user = get_user(token)
+
+    df_risk = pd.read_sql(
+        'SELECT * FROM "External_risk"',
+        engine,
+    )
+
+    df_emergency = pd.read_sql(
+        'SELECT * FROM "Emergency"',
+        engine,
+    )
 
     selected_tab = request.args.get("tab", "maps")
-    selected_score = request.args.get("score", df_risk.columns[1])
     selected_colormap = request.args.get("colormap", "Blues")
     selected_risk = request.args.get("risk", "cyclone")
 
     only_impl = request.args.get("only_impl") == "true"
 
-    if only_impl:
-        countries_impl = set(df_emergency["Country"])
-        df_risk = df_risk[df_risk["Country"].isin(countries_impl)]
+    # =========================================================================
+    # AUTHORIZATION LEVEL
+    # =========================================================================
 
-    scores = [col for col in df_risk.columns if col != "Country"]
+    if user:
+        scores = [
+            column
+            for column in df_risk.columns
+            if column != "Country"
+        ]
+    else:
+        scores = ["Population"]
+
+    selected_score = request.args.get(
+        "score",
+        scores[0],
+    )
+
+    # =========================================================================
+    # FILTER IMPLEMENTATIONS
+    # =========================================================================
+
+    if only_impl:
+
+        countries_impl = set(df_emergency["Country"])
+
+        df_risk = df_risk[
+            df_risk["Country"].isin(countries_impl)
+        ]
+
     countries = df_risk["Country"].unique().tolist()
 
     return render_template(
         "map.html",
+        user=user,
         scores=scores,
         selected_score=selected_score,
         selected_colormap=selected_colormap,
@@ -80,106 +184,203 @@ def index():
         selected_risk=selected_risk,
         only_impl=only_impl,
         countries=countries,
-        final_score=None
+        final_score=None,
     )
 
-@app.route("/health")
-def health():
-    return "ok"
 
-# Map endpoint (with auth)
+# =============================================================================
+# RISK MAP
+# =============================================================================
+
 @app.route("/map_html")
 def map_html():
-    # 🔐 Auth
+    """
+    Generate interactive risk map.
+
+    Requires authentication.
+    """
+
     token = request.args.get("token")
-    print('token=',token)
+
     if not token:
         return "Unauthorized - no token", 401
 
     user = get_user(token)
-    print('user=',user)
 
     if not user:
         return "Unauthorized - invalid token", 401
 
-    df_risk = pd.read_sql('SELECT * FROM "External_risk"', engine)
-    df_emergency = pd.read_sql('SELECT * FROM "Emergency"', engine)
+    df_risk = pd.read_sql(
+        'SELECT * FROM "External_risk"',
+        engine,
+    )
+
+    df_emergency = pd.read_sql(
+        'SELECT * FROM "Emergency"',
+        engine,
+    )
 
     geo = load_geo_data()
 
-    score = request.args.get("score", df_risk.columns[1])
-    colormap = request.args.get("colormap", "Blues")
+    score = request.args.get("score", "Population")
+
+    colormap = request.args.get(
+        "colormap",
+        "Blues",
+    )
+
     only_impl = request.args.get("only_impl") == "true"
 
-    
+    # =========================================================================
+    # FILTER BY USER
+    # =========================================================================
 
     user_email = user.get("email")
 
-    # Filter by users if different level of authorisations
     if "email" in df_risk.columns:
-        df_risk = df_risk[df_risk["email"] == user_email]
 
-    # 🔥 Existing filter
+        df_risk = df_risk[
+            df_risk["email"] == user_email
+        ]
+
+    # =========================================================================
+    # FILTER IMPLEMENTATIONS
+    # =========================================================================
+
     if only_impl:
-        countries_impl = set(df_emergency["Country"])
-        df_risk = df_risk[df_risk["Country"].isin(countries_impl)]
 
-    # 🔗 Map values
+        countries_impl = set(df_emergency["Country"])
+
+        df_risk = df_risk[
+            df_risk["Country"].isin(countries_impl)
+        ]
+
+    # =========================================================================
+    # BUILD MAP VALUES
+    # =========================================================================
+
     value_dict = df_risk.set_index("Country")[score].to_dict()
 
-    for f in geo["features"]:
-        country = f["properties"]["name"]
-        f["properties"][score] = value_dict.get(country)
+    for feature in geo["features"]:
 
-    m = create_map(df_risk, geo, score, colormap)
+        country = feature["properties"]["name"]
 
-    return m.get_root().render()
+        feature["properties"][score] = value_dict.get(country)
 
-#def 
+    # =========================================================================
+    # CREATE MAP
+    # =========================================================================
+
+    risk_map = create_map(
+        df_risk,
+        geo,
+        score,
+        colormap,
+    )
+
+    return risk_map.get_root().render()
 
 
-# Emergency map 
+# =============================================================================
+# EMERGENCY MAP
+# =============================================================================
+
 @app.route("/emergency_map")
 def emergency_map():
+    """
+    Display emergency map.
+
+    Shows:
+    - Emergency contact
+    - Emergency phone number
+    - Only countries with implementations
+    """
 
     risk = request.args.get("risk", "cyclone")
 
     geo = load_geo_data()
-    df = pd.read_sql('SELECT * FROM "Emergency"', engine)
 
-    m = create_emergency_map(df, geo, risk)
+    df_emergency = pd.read_sql(
+        'SELECT * FROM "Emergency"',
+        engine,
+    )
 
-    return m.get_root().render()
+    # =========================================================================
+    # KEEP ONLY IMPLEMENTED COUNTRIES
+    # =========================================================================
+
+    df_emergency = df_emergency.dropna(
+        subset=["Phone", "Contact"],
+    )
+
+    emergency = create_emergency_map(
+        df_emergency,
+        geo,
+        risk,
+    )
+
+    return emergency.get_root().render()
 
 
-# Implementation tab
+# =============================================================================
+# IMPLEMENTATION ANALYSIS
+# =============================================================================
+
 @app.route("/implementation", methods=["POST"])
 def implementation():
+    """
+    Compute implementation risk score.
+    """
 
-    df = pd.read_sql('SELECT * FROM "External_risk"', engine)
+    df_risk = pd.read_sql(
+        'SELECT * FROM "External_risk"',
+        engine,
+    )
 
     country = request.form.get("country")
-    factories = int(request.form.get("factories", 1))
-    people = int(request.form.get("people", 0))
 
-    base_score = df.loc[df["Country"] == country].iloc[0, 1]
-    final_score = base_score * factories * (1 + people / 1000)
+    factories = int(
+        request.form.get("factories", 1)
+    )
 
-    countries = df["Country"].tolist()
+    people = int(
+        request.form.get("people", 0)
+    )
+
+    base_score = df_risk.loc[
+        df_risk["Country"] == country
+    ].iloc[0, 1]
+
+    final_score = (
+        base_score
+        * factories
+        * (1 + people / 1000)
+    )
+
+    countries = df_risk["Country"].tolist()
 
     return render_template(
         "map.html",
         selected_tab="implementation",
         countries=countries,
         final_score=round(final_score, 2),
-        scores=df.columns.tolist(),
-        selected_score=df.columns[1],
+        scores=df_risk.columns.tolist(),
+        selected_score=df_risk.columns[1],
         selected_colormap="Blues",
         selected_risk="cyclone",
-        only_impl=False
+        only_impl=False,
     )
 
-# Run
+
+# =============================================================================
+# RUN
+# =============================================================================
+
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+    )
