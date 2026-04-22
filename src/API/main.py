@@ -197,18 +197,24 @@ def map_html():
     """
     Generate interactive risk map.
 
-    Requires authentication.
+    Unauthenticated users:
+    - can only access Population map
+
+    Authenticated users:
+    - can access all scores
     """
 
     token = request.args.get("token")
 
-    if not token:
-        return "Unauthorized - no token", 401
+    # =========================================================================
+    # OPTIONAL AUTH
+    # =========================================================================
 
-    user = get_user(token)
+    user = get_user(token) if token else None
 
-    if not user:
-        return "Unauthorized - invalid token", 401
+    # =========================================================================
+    # LOAD DATA
+    # =========================================================================
 
     df_risk = pd.read_sql(
         'SELECT * FROM "External_risk"',
@@ -222,8 +228,6 @@ def map_html():
 
     geo = load_geo_data()
 
-    score = request.args.get("score", "Population")
-
     colormap = request.args.get(
         "colormap",
         "Blues",
@@ -232,16 +236,28 @@ def map_html():
     only_impl = request.args.get("only_impl") == "true"
 
     # =========================================================================
-    # FILTER BY USER
+    # AUTHORIZATION LEVEL
     # =========================================================================
 
-    user_email = user.get("email")
+    if user:
 
-    if "email" in df_risk.columns:
+        score = request.args.get(
+            "score",
+            df_risk.columns[1],
+        )
 
-        df_risk = df_risk[
-            df_risk["email"] == user_email
-        ]
+        user_email = user.get("email")
+
+        if "email" in df_risk.columns:
+
+            df_risk = df_risk[
+                df_risk["email"] == user_email
+            ]
+
+    else:
+
+        # 🔥 Public mode
+        score = "Population"
 
     # =========================================================================
     # FILTER IMPLEMENTATIONS
@@ -279,7 +295,6 @@ def map_html():
     )
 
     return risk_map.get_root().render()
-
 
 # =============================================================================
 # EMERGENCY MAP
