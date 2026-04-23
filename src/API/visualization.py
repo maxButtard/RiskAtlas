@@ -89,10 +89,10 @@ def create_map(df, geo_data, target, colormap_name="Blues"):
             tooltip += f"""
             <br><br>
             <b>Sanctions groups</b><br>
-            Group 1 (UN): {info.get('group_1_label', 'N/A')}<br>
-            Group 2 (US): {info.get('group_2_label', 'N/A')}<br>
-            Group 3 (EU/UK): {info.get('group_3_label', 'N/A')}<br>
-            Group 4 (Others): {info.get('group_4_label', 'N/A')}
+            UNSC, World Bank : {info.get('group_1_label', 'N/A')}<br>
+            SDN (US), US Consolidated: {info.get('group_2_label', 'N/A')}<br>
+            EU, UK: {info.get('group_3_label', 'N/A')}<br>
+            Canada,Australia,Japan (METI),China (MOFCOM): {info.get('group_4_label', 'N/A')}
             """
 
         feature["properties"]["tooltip"] = tooltip
