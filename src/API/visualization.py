@@ -25,6 +25,24 @@ def create_map(df, geo_data, target, colormap_name="Blues"):
     colormap = COLORMAPS.get(colormap_name, cm.linear.Blues_09).scale(vmin, vmax)
 
     valid_countries = set(df["Country"])
+    # ================================================================
+    # SANCTIONS LABELS
+    # ================================================================
+    sanctions_labels = {}
+
+    if target == "score_pol_sanctions_international":
+
+        sanctions_labels = (
+            df.set_index("Country")[
+                [
+                    "group_1_label",
+                    "group_2_label",
+                    "group_3_label",
+                    "group_4_label",
+                ]
+            ]
+            .to_dict(orient="index")
+        )
 
     m = folium.Map(location=[20, 0], zoom_start=2)
 
@@ -47,12 +65,47 @@ def create_map(df, geo_data, target, colormap_name="Blues"):
             "fillOpacity": 0.7,
         }
 
+    # ================================================================
+    # TOOLTIP
+    # ================================================================
+    for feature in geo_data["features"]:
+
+        country = feature["properties"]["name"]
+
+        value = score_dict.get(country)
+
+        tooltip = f"""
+        <b>{country}</b><br>
+        {target}: {value}
+        """
+
+        # ------------------------------------------------------------
+        # SANCTIONS DETAILS
+        # ------------------------------------------------------------
+        if target == "score_pol_sanctions_international":
+
+            info = sanctions_labels.get(country, {})
+
+            tooltip += f"""
+            <br><br>
+            <b>Sanctions groups</b><br>
+            Group 1 (UN): {info.get('group_1_label', 'N/A')}<br>
+            Group 2 (US): {info.get('group_2_label', 'N/A')}<br>
+            Group 3 (EU/UK): {info.get('group_3_label', 'N/A')}<br>
+            Group 4 (Others): {info.get('group_4_label', 'N/A')}
+            """
+
+        feature["properties"]["tooltip"] = tooltip
+
+    # ================================================================
+    # GEOJSON
+    # ================================================================
     folium.GeoJson(
         geo_data,
         style_function=style,
         tooltip=folium.GeoJsonTooltip(
-            fields=["name", target],
-            aliases=["Country:", target],
+            fields=["tooltip"],
+            labels=False,
         ),
     ).add_to(m)
 
