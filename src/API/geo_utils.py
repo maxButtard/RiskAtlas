@@ -35,6 +35,8 @@ def load_geo_data():
         "French Southern and Antarctic Lands",
         "Northern Cyprus"
     ])
+    next(f for f in geo_data["features"] if f["properties"]["name"] == "West Bank")["properties"]["name"] = "Palestinian Territories"
+
 
     return geo_data
 
