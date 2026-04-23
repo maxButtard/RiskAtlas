@@ -159,11 +159,13 @@ def index():
 
     if user:
 
+        numeric_cols = df_risk.select_dtypes(
+            include="number"
+        ).columns
+    
         scores = [
-            column
-            for column in df_risk.columns
-            if column != "Country"
-        ]
+            col
+            for col in numeric_cols]
 
     else:
 
