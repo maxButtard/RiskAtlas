@@ -379,6 +379,25 @@ def emergency_map():
     return emergency.get_root().render()
 
 # =============================================================================
+# SET PASSWORD
+# =============================================================================
+
+@app.route("/set-password")
+def set_password():
+    """
+    Render password setup page.
+
+    Returns
+    -------
+    str
+        Password setup HTML page.
+    """
+
+    return render_template(
+        "set_password.html",
+    )
+
+# =============================================================================
 # RUN
 # =============================================================================
 
